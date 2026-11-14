@@ -1,0 +1,8 @@
+{
+  "name": "DP.PORTFOLIO | EN",
+  "description": "Official English photography and cinematography portfolio of Dominik Šuškevič (DP.PORTFOLIO) — editorial galleries, visual storytelling, and creative services.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

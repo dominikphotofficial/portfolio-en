@@ -1,0 +1,1568 @@
+# DP.PORTFOLIO — Design System & Implementation Reference
+
+Single source of truth for the **DP.PORTFOLIO** website visual system as currently implemented across the main site, subpages, all album series pages, language subdomains, and the administration panel.
+
+---
+
+## 1. Design Tokens
+
+All visual tokens live at the top of `/style.css` inside `:root`. Never hard-code colors, typography families, spacing measurements, radii, or easing curves outside these tokens.
+
+### 1.1 Exact `:root` CSS Variables (`style.css`)
+
+```css
+:root {
+  /* Colors */
+  --bg: #ffffff;
+  --bg-soft: #fafaf8;
+  --text: #1a1a1a;
+  --text-muted: #6b6b6b;
+  --text-faint: #9a9a9a;
+  --accent: #113939;
+  --accent-hover: #1d5252;
+  --border: #e8e8e8;
+
+  /* Typography — Montserrat everywhere */
+  --font: "Montserrat", system-ui, sans-serif;
+  --fs-xs: 0.75rem;                      /* 12px — kickers, index numbers, legal/lang metadata */
+  --fs-sm: 0.875rem;                     /* 14px — subtitles, metadata rows, admin tables */
+  --fs-base: 1rem;                       /* 16px — minimum mobile body size & inputs */
+  --fs-lg: 1.25rem;                      /* 20px — album card titles & subsection headings */
+  --fs-xl: clamp(1.75rem, 4vw, 2.5rem);  /* 28px–40px — section headings (h2) */
+  --fs-hero: clamp(2.5rem, 7vw, 5.75rem);/* 40px–92px — hero title & album hero title */
+  --ls-label: 0.28em;                    /* uppercase kickers, portfolio label, scroll cue */
+  --ls-title: 0.01em;                    /* headings & card titles */
+  --fw-regular: 400;
+  --fw-medium: 500;
+  --fw-bold: 600;
+  --lh: 1.65;
+
+  /* Spacing Scale (strictly use these) */
+  --sp-1: 4px;
+  --sp-2: 8px;
+  --sp-3: 16px;
+  --sp-4: 24px;
+  --sp-5: 40px;
+  --sp-6: 64px;
+  --sp-7: 112px;
+
+  /* Shape, Layout & Motion */
+  --radius: 2px;                         /* crisp gallery-like sharp corners */
+  --maxw: 1280px;                        /* max content width */
+  --gutter: clamp(16px, 4vw, 48px);      /* horizontal page gutter */
+  --ease: cubic-bezier(0.2, 0.7, 0.2, 1);
+  --ease-reveal: 500ms var(--ease);
+
+  /* Per-album theme defaults (overridden by .series-* on album <body>) */
+  --series-accent: var(--accent);
+  --series-tint: var(--bg);
+  --series-motion: 500ms;
+
+  /* Compatibility aliases for embedded subpage/admin modules */
+  --bg-color: var(--bg);
+  --surface-color: var(--bg);
+  --accent-color: var(--accent);
+  --accent-light: var(--accent);
+  --text-color: var(--text);
+  --font-heading: var(--font);
+  --font-body: var(--font);
+}
+```
+
+### 1.2 Global Typography & Color Discipline
+
+- **Font import** (loaded on all 33 HTML pages via Google Fonts):
+  ```html
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600&display=swap" rel="stylesheet">
+  ```
+- **Weights used**: `400` (`--fw-regular`), `500` (`--fw-medium`), `600` (`--fw-bold`). No grotesque fallbacks or secondary UI typefaces are permitted.
+- **Root font size**: `html { font-size: 16px; }`, ensuring mobile body prose and inputs never drop below `16px`.
+- **Headings (`h1`–`h6`)**: `font-family: var(--font); font-weight: var(--fw-bold); letter-spacing: var(--ls-title); line-height: 1.22; text-wrap: balance;`.
+- **Accent `#113939` usage**: Reserved strictly for primary buttons, active navigation indicators, hover states, focus rings, dividers (`48px × 1.5px`), kickers, lightbox progress bar, and subtle UI highlights. Never used for large surface fills or body copy.
+- **No background logo watermark**: `body::before` and any background DP logo watermarks behind body copy, navigation drawer, or footer are intentionally excluded.
+
+---
+
+## 2. Per-Series Album Themes
+
+Every album page applies two classes to `<body>`: `has-hero` plus one of four `.series-*` classes defined in `style.css`. No inline `<style>:root { ... }</style>` blocks are used in album pages.
+
+```css
+.series-horses {
+  --series-accent: #8b5e3c;
+  --series-tint: #f5efe6;
+  --series-motion: 700ms;
+}
+
+.series-portraits {
+  --series-accent: #1a1a1a;
+  --series-tint: #f4f4f4;
+  --series-motion: 550ms;
+}
+
+.series-nature {
+  --series-accent: #2f6b64;
+  --series-tint: #eef4f2;
+  --series-motion: 550ms;
+}
+
+.series-urban {
+  --series-accent: #3d4f66;
+  --series-tint: #eef1f5;
+  --series-motion: 400ms;
+}
+```
+
+### How Series Themes Apply
+- **Page background**: `body { background-color: var(--series-tint, var(--bg)); }`
+- **Scrolled header**: `background-color: color-mix(in srgb, var(--series-tint, var(--bg)) 92%, transparent);`
+- **Highlights & UI accents**: `.divider`, `.feature-kicker`, `.album-back-link:hover`, `.album-info-label`, `.album-info-link`, `.lightbox-progress-bar`, and lightbox hover controls inherit `var(--series-accent, var(--accent))`.
+- **Reveal pace**: Controlled by `--series-motion` (`700ms` calm slow pace for horses, `550ms` for portraits/nature, `400ms` crisp pace for urban).
+
+### Album-to-Series Mapping (All 22 Album Files)
+
+| Series Class | `--series-accent` | `--series-tint` | Album HTML Files |
+| :--- | :--- | :--- | :--- |
+| `.series-horses` | `#8b5e3c` | `#f5efe6` | `albums/zeimenos-zirgai.html` |
+| `.series-portraits` | `#1a1a1a` | `#f4f4f4` | `albums/cirkliskis.html`, `albums/petrausku-namai.html`, `albums/rundale.html`, `albums/valdovu-rumai.html`, `albums/winter.html`, `albums/winter-cirkliskis.html`, `albums/winter-sventa.html` |
+| `.series-nature` | `#2f6b64` | `#eef4f2` | `albums/azuolynas.html`, `albums/azuolyno-parkas.html`, `albums/baltoji-kiele.html`, `albums/gandras.html`, `albums/geles.html`, `albums/sirvetos-parkas.html`, `albums/sventa.html`, `albums/vdu-sodas.html` |
+| `.series-urban` | `#3d4f66` | `#eef1f5` | `albums/autoshow-kaunas-09-05.html`, `albums/bmw-e36.html`, `albums/car-meet-2026-05-26.html`, `albums/car-meet-kaunas.html`, `albums/moletu-observatorija.html`, `albums/noka.html` |
+
+---
+
+## 3. Components Specification
+
+### 3.1 Header (`header` / `#main-header`)
+
+- **Structure**:
+  ```html
+  <header id="main-header">
+      <div class="header-container">
+          <a href="index.html" class="logo" aria-label="DP.PORTFOLIO">
+              <span class="logo-mark"><img src="https://iili.io/fjNLbs4.png" alt="DP.PORTFOLIO" class="logo-img"></span>
+              <span class="logo-sub">Portfolio</span>
+          </a>
+          <div class="header-right">
+              <div class="header-langs" aria-label="Kalba">...</div>
+              <button type="button" class="burger" id="burger-menu" aria-label="Atidaryti meniu" aria-expanded="false" aria-controls="nav-overlay">
+                  <span></span><span></span><span></span>
+              </button>
+          </div>
+      </div>
+  </header>
+  ```
+- **Key CSS**:
+  - Dimensions: `height: 64px` (mobile), `72px` (`min-width: 640px`), `.header-container` max-width `var(--maxw)` with `padding-inline: var(--gutter)`.
+  - Logo mark: `.logo-mark` is a `36px × 36px` square (`border: 1px solid var(--text)`, `border-radius: var(--radius)`, `padding: 4px`, `.logo-img` height `24px`) paired with `.logo-sub` (`font-size: var(--fs-xs)`, `font-weight: 500`, `letter-spacing: var(--ls-label)`, uppercase).
+  - Non-hero pages (`about`, `biography`, `contacts`, `frozen-time`, `privacy-policy`, `review`, `services`, `terms-of-service`, `tfp-booking`, `admin`): `position: sticky; top: 0;` with translucent white backdrop blur (`backdrop-filter: blur(10px)`) and `1px solid var(--border)` bottom border.
+  - Hero pages (`body.has-hero` on `index.html` and `albums/*.html`): `position: fixed;`, transparent with top dark scrim gradient (`rgba(14,18,18,0.54)` to transparent), white `.logo-sub` / `.header-langs a` / `.burger span`. After scrolling past `80px` (`window.scrollY > 80`), `script.js` toggles `.scrolled` and transitions smoothly over `300ms var(--ease)` to translucent `var(--series-tint, var(--bg))` at `92%` opacity with `backdrop-filter: blur(10px)` and dark foreground text.
+
+### 3.2 Burger Trigger & Slide-Over Navigation Drawer
+
+- **Burger (`.burger`)**:
+  - `width: 44px; height: 44px; align-items: flex-end; gap: 6px; padding: 0 8px;`
+  - Three `1.5px` high lines (`<span>`): top `26px`, middle `20px`, bottom `26px`.
+  - `.burger.active` morphs lines 1 & 3 (`±7.5px` + `±45deg`) into a thin `X` while scaling line 2 to `0`.
+- **Drawer Overlay (`.nav-overlay`, `.nav-panel`)**:
+  - Backdrop: `.nav-overlay` (`rgba(15, 20, 20, 0.36)`, `backdrop-filter: blur(4px)`, opacity `350ms var(--ease)`).
+  - Panel: `.nav-panel` (`100%` fullscreen on mobile, `width: min(480px, 100vw)` on `>= 640px` anchored right with `1px solid var(--border)` left edge), `transform: translateX(100%) -> translateX(0)` over `350ms var(--ease)`.
+  - Scroll lock: `body.menu-open { overflow: hidden; }`. Closes on `Escape`, backdrop click, `.nav-close` (`44px × 44px`), or any `.nav-link` click.
+  - Links inside `.mobile-nav`:
+    - Primary numbered links (`01`–`06` via `.nav-num` muted in `--text-faint` with `tabular-nums`, label wrapped in `.nav-label-text`): `font-size: 1.75rem` (`28px` mobile) / `2.25rem` (`36px` at `>= 768px`), `font-weight: 500`, `min-height: 60px`.
+    - Secondary links (`.nav-link.nav-secondary` for Privacy Policy & Terms): `font-size: var(--fs-sm)`, `font-weight: 400`, `color: var(--text-muted)`, `min-height: 44px`.
+    - Stagger reveal on open: `.nav-link` animates from `opacity: 0; transform: translateY(12px)` to `opacity: 1; transform: translateY(0)` over `350ms var(--ease)` with `60ms` steps (`40ms`, `100ms`, `160ms`, `220ms`, `280ms`, `340ms`, `400ms`, `460ms`).
+    - Active link state: `color: var(--series-accent, var(--accent))` + `1.5px` underline via `.nav-label-text::after`.
+    - Hover state: `transform: translateX(6px)` + accent color.
+  - Panel bottom (`.nav-panel-footer`): `border-top: 1px solid var(--border)`, `.nav-panel-langs`, email (`info@dominikphotofficial.lt`), and Instagram (`@dominikphotofficial`).
+
+### 3.3 Home Hero Slideshow (`.hero`)
+
+- **Structure**: `.hero` > `.hero-slides` (`3` `.hero-slide` `<img>` elements) + `.hero-scrim` + `.hero-content` (`h1.hero-title` + `p.hero-descriptors`) + `.hero-scroll` + `.hero-progress` (`3` `.hero-progress-line` `<button>` elements).
+- **Dimensions & Overlay**: `height: 100svh; min-height: 520px; background: #141a1a;` with vertical dark gradient `.hero-scrim` (`26%` to `56%` dark opacity).
+- **Slideshow Timing & Zoom**: Cycles every `6000ms` via `script.js` (`opacity 1200ms var(--ease)` crossfade paired with `transform: scale(1) -> scale(1.05)` over `6000ms linear`).
+- **Typography**: `.hero-title` renders `"DP.PORTFOLIO"` at `--fs-hero` (`2.5rem`–`5.75rem`), weight `600`, `letter-spacing: 0.02em`. `.hero-descriptors` renders `"ERDVĖ · ŠVIESA · EMOCIJA"` at `0.8125rem` (`13px`), uppercase, `letter-spacing: 0.3em`, `rgba(255, 255, 255, 0.85)`.
+- **Scroll Cue & Progress**:
+  - Bottom center `.hero-scroll` (`SCROLL` uppercase + `1px × 36px` `.hero-scroll-line` with animated `2.2s` downward stroke).
+  - Bottom right `.hero-progress` (`3` horizontal `1.5px` lines: `28px` inactive `rgba(255,255,255,0.35)`, `40px` active `#ffffff`). Clicking jumps slides and resets interval.
+  - Both `.hero-scroll` and `.hero-progress` fade out (`.hidden`) once `window.scrollY > 40`.
+
+### 3.4 TFP Booking Block (`.booking-block`)
+
+- **Structure**: Centered section containing `.feature-kicker` (`TFP Registracija`), `<h2>`, one descriptive paragraph, and one `.btn-primary` CTA linking to `tfp-booking.html`.
+- **Key CSS**: `max-width: 620px; margin-inline: auto; text-align: center; padding-top: var(--sp-7); padding-bottom: var(--sp-6); padding-inline: var(--gutter);`.
+
+### 3.5 Feature Boards (`Services` & `Žeimenos Žirgai`)
+
+- **Classes**: `.film-promo-board` (Services board) and `.zeimenos-feature-board` (Žeimenos Žirgai board), sharing structural styles with `.feature-board`.
+- **Key CSS**:
+  - `display: grid; grid-template-columns: 1fr;` (2 equal columns `1fr 1fr` at `min-width: 768px`).
+  - Surface & border: `background: var(--bg-soft); border: 1px solid var(--border); border-radius: var(--radius); margin-bottom: var(--sp-6)` (`--sp-7` at `>= 1024px`).
+  - Media (`.promo-bg`, `.zeimenos-feature-img`, `.feature-board-media`): `min-height: 300px; overflow: hidden;` with `img { object-fit: cover; transition: transform 900ms var(--ease); }` scaling to `1.04` on board hover.
+  - Copy column (`.promo-content`, `.zeimenos-feature-content`): `background: var(--bg); padding: var(--sp-4)` (`--sp-6` at `>= 640px`), uppercase kicker (`.promo-badge` / `.zeimenos-badge` with `--ls-label`), `--fs-xl` title, muted prose, checklist (`.feature-list` prefixed with `"— "`) or unboxed separator tags (`.zeimenos-tag-pills`), and `.btn-primary` CTA row (plus `.zeimenos-phone-link` `min-height: 44px`).
+
+### 3.6 Editorial Albums Section & Grid (`.section-header-editorial`, `.album-grid-columns`)
+
+- **Category filter bar**: Permanently removed (no `.gallery-filter` in HTML, CSS, or JS).
+- **Section Header**: `.section-header-editorial` (`border-bottom: 1px solid var(--border); padding-bottom: var(--sp-3); margin-bottom: var(--sp-5); display: flex; justify-content: space-between; align-items: baseline;`) with uppercase `.section-label-caps` left and `.section-count-muted` right.
+- **Grid Columns & Staggered Offsets**:
+  - Mobile (`< 640px`): `grid-template-columns: 1fr; gap: var(--sp-5);` (`40px`), covers `aspect-ratio: 4 / 5`.
+  - Tablet (`>= 640px`): `grid-template-columns: repeat(2, 1fr); gap: var(--sp-4);` (`24px`).
+  - Desktop (`>= 1024px`): 12-column magazine layout (`grid-template-columns: repeat(12, 1fr); column-gap: var(--sp-5); row-gap: var(--sp-6); align-items: start;`):
+    - `.album-card:nth-child(odd)`: `grid-column: span 7;`, `.album-card-media { aspect-ratio: 4 / 3; }`.
+    - `.album-card:nth-child(even)`: `grid-column: span 5; margin-top: var(--sp-7);` (`112px` vertical stagger), `.album-card-media { aspect-ratio: 4 / 5; }`.
+- **Album Card (`.album-card`)**:
+  - Image frame (`.album-card-media`): `border-radius: var(--radius); overflow: hidden; background: var(--bg-soft);`, `img { width: 100%; height: 100%; object-fit: cover; transition: transform 900ms var(--ease), opacity 500ms var(--ease); }` with `loading="lazy"`, `decoding="async"`, and explicit `width`/`height` attributes.
+  - Text body (`.album-card-body`):
+    - `.album-card-title`: `font-size: 1.25rem` (`20px`), `font-weight: 600`.
+    - `.album-card-meta`: `font-size: var(--fs-sm)`, `color: var(--text-muted)`.
+    - `.album-card-action` (`"Peržiūrėti albumą →"`): `font-size: var(--fs-xs)`, uppercase, `letter-spacing: 0.14em`, `color: var(--accent)`, `opacity: 0; transform: translateX(-8px)`.
+  - Hover state: Image scales `1.04` over `900ms`, title turns `var(--accent)`, action label slides in (`opacity: 1; transform: translateX(0)` over `300ms`). On touch devices (`@media (hover: none)`), action label remains subtly visible (`opacity: 0.85`).
+
+### 3.7 Album Page Flow (`albums/*.html`)
+
+1. **Album Hero (`.album-hero`)**: `height: 70svh; min-height: 440px;` full-bleed cover image (`.album-hero-img`) behind `.album-hero-scrim`, top-left `.album-back-link` (`← Albumai`), `.album-hero-sub` uppercase kicker (`category · photo count · year`), and `h1.album-hero-title` (`--fs-hero`).
+2. **Intro Row (`.album-intro` > `.album-intro-grid`)**: Two-column desktop layout (`minmax(0, 1.5fr) minmax(240px, 0.85fr)` at `>= 768px`) with existing story/partner header on the left (`.album-intro-copy`) and hairline-bordered metadata rows on the right (`.album-intro-meta` / `.album-intro-meta-row` displaying `Apimtis`, `Vieta`, `Autorius`).
+3. **Photo Wall (`.gallery-grid`)**: Multi-column layout (`column-count: 1` mobile, `2` at `640px`, `3` at `1024px`; `column-gap: 6px` mobile / `8px` desktop) where `.gallery-item` preserves every photo's native aspect ratio (`img { width: 100%; height: auto; display: block; }`, zero stretching or cropping). Hover gently scales image (`1.03` over `900ms`). (Note: `albums/winter.html` displays the 2-series selector using `.album-grid-columns`.)
+4. **Album Info / Partner Contacts (`.album-info-section`)**: 3-column structured `.album-info-band` (or `.album-contact-card` on `albums/zeimenos-zirgai.html`) separated by `1px solid var(--border)` top/bottom lines.
+5. **Next Album Strip (`.next-album-strip`)**: Full-width sequential strip tinted via inline `--next-tint` and `--next-accent` of the next series, featuring `"KITAS ALBUMAS"`, series `<h2>`, and rightward translating arrow (`8px` on hover).
+6. **Footer**: Standard `.footer-minimal`.
+
+### 3.8 Lightbox (`#lightbox`)
+
+- **Backdrop & Transitions**: Fixed full-viewport `#111111` surface (`z-index: 2000`), fading in/out over `350ms var(--ease)`.
+- **Image Display**: Centered inside `.lightbox-image-wrapper` (`max-width: 92vw; max-height: 86vh; object-fit: contain`), smooth crossfade/horizontal nudge (`opacity` + `translateX(10px) -> 0`) over `350ms var(--ease)`. Adjacent previous and next images are preloaded in memory whenever the index changes.
+- **Controls & Progress**:
+  - `.lightbox-top`: Top bar with zero-padded counter (`#lightbox-counter`, formatted `03 / 24` via `tabular-nums`, `letter-spacing: 0.14em`) and `.lightbox-close` (`44px × 44px`).
+  - `.lightbox-prev` / `.lightbox-next`: `44px × 44px` buttons (`rgba(255,255,255,0.08)`, subtle white border, hover fill `--series-accent`). Supports click arrows, keyboard `ArrowLeft`/`ArrowRight`/`Escape`, and mobile horizontal touch swipe (`50px` threshold).
+  - `.lightbox-progress` / `.lightbox-progress-bar`: Bottom `2px` bar filled proportionally with `--series-accent`.
+
+### 3.9 Buttons, Forms & Admin Panel
+
+- **Primary Buttons** (`.btn-primary`, `.cta-button`, `.select-service-btn`, `.submit-service-btn`, `.submit-tfp-btn`, `.review-submit-btn`, `.submit-btn`, `.admin-btn`, `.admin-save-btn`):
+  - `background-color: var(--accent); color: #ffffff; border: 1px solid var(--accent); border-radius: var(--radius); min-height: 48px; padding: 0 36px; font-size: 0.8125rem (13px); font-weight: 500; letter-spacing: 0.18em; text-transform: uppercase;`
+  - Hover: `background-color: var(--accent-hover); border-color: var(--accent-hover);`.
+- **Secondary Buttons** (`.btn-secondary`, `.promo-btn`, `.admin-btn-outline`):
+  - `background-color: transparent; color: var(--accent); border: 1px solid var(--accent);` with same `48px` height, `0.18em` tracking, `--radius: 2px`. Hover tints background `rgba(17, 57, 57, 0.06)`.
+- **Inputs & Textareas**:
+  - `font-family: var(--font); font-size: 16px; min-height: 48px; padding: 12px 14px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--bg); color: var(--text);`
+  - Focus ring: `border-color: var(--accent); box-shadow: 0 0 0 2px rgba(17, 57, 57, 0.18);`.
+- **Cards**: `.card-surface` (`background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius); padding: var(--sp-4)` / `--sp-5` at `>= 640px`).
+- **Admin (`admin.html`)**: Uses identical `--font`, `--bg`, `--accent`, `--border`, `--radius`, and header/drawer shell. Employs compact data tables (`.vmi-table`, `.sheets-table`, `.audit-log-table`, `.diag-table`: `font-size: var(--fs-sm)`, header `#f9fafb`, `10px 12px` / `8px 12px` cell padding, horizontal scroll wrappers).
+
+### 3.10 Editorial Footer (`.footer-minimal`)
+
+- **Structure**: Top 3-column `.footer-editorial-grid` (`DP` brand mark + `Portfolio` label + tagline + `info@dominikphotofficial.lt` left; `Navigacija` column center; `Informacija` column right), bottom `.footer-min-bottom` with copyright notice left and `.footer-min-langs` switcher right.
+- **Key CSS**: `background: var(--bg-soft); border-top: 1px solid var(--border); padding-top: var(--sp-6); padding-bottom: var(--sp-5);`. Links have minimum `36px–44px` hit areas and hover to `var(--accent)`. Zero background logo watermark.
+
+---
+
+## 4. Animation Rules
+
+- **Primary Curve**: `var(--ease)` = `cubic-bezier(0.2, 0.7, 0.2, 1)`.
+- **Reveal on Scroll (`.fade-in-up`, `.reveal`)**:
+  - Hidden initial state: `opacity: 0; transform: translateY(14px);`.
+  - Revealed state (`.visible`): `opacity: 1; transform: translateY(0);` transitioning over `var(--series-motion, 500ms) var(--ease)`.
+  - Driven by `IntersectionObserver` (`threshold: 0.05`, `rootMargin: "0px 0px -24px 0px"`) with `80ms` row stagger (`(idx % 2) * 80` ms) applied to `.album-card` children and a `450ms` fallback reveal ensure no element stays invisible.
+- **Lazy Images (`img.dp-lazy`)**: `opacity: 0 -> 1` over `500ms var(--ease)` on image load (handled cleanly with cached-image bypass).
+- **Hover Transitions**: Links/buttons `250ms–300ms var(--ease)`; card/gallery/board cover zoom (`scale(1.03–1.04)`) `900ms var(--ease)`.
+- **Hero Slideshow**: `6000ms` interval, `1200ms` opacity crossfade, `6000ms linear` subtle `scale(1) -> scale(1.05)`.
+- **Page Navigation Fade**: Internal same-origin `.html` link clicks apply `body.page-leaving { opacity: 0; }` (`200ms var(--ease)`) before navigating, cleared on `pageshow`.
+- **Reduced Motion (`@media (prefers-reduced-motion: reduce)`)**:
+  - Collapses animation and transition durations to `0.01ms`, disables smooth scroll, removes `.hero-slide.active` zoom (`transform: none`), forces `.fade-in-up`, `.reveal`, `img.dp-lazy`, and `.mobile-nav .nav-link` to full `opacity: 1` with zero offset, and prevents JS slideshow auto-advance or page-fade delays.
+
+---
+
+## 5. Responsive Rules & Breakpoints
+
+Mobile-first architecture with `html, body { overflow-x: hidden; overflow-wrap: anywhere; }` across all viewports (`375px`, `768px`, `1440px`):
+
+- **Mobile (`375px` baseline / `< 640px`)**:
+  - Header height `64px`; fullscreen `.nav-panel` drawer; primary nav links `28px`.
+  - Single-column album cards (`1fr`, `aspect-ratio: 4 / 5`, gap `40px`), single-column feature boards, single-column album gallery (`column-count: 1`, gap `6px`), stacked 1-column footer.
+  - All tap targets `>= 44px`; buttons `>= 48px`; inputs `16px` to prevent mobile iOS zoom.
+- **Tablet (`768px` / `@media (min-width: 640px)` & `@media (min-width: 768px)`)**:
+  - At `640px+`: Header becomes `72px`; `.nav-panel` docks right at `max-width: 480px`; albums grid switches to 2 equal columns (`gap: 24px`); gallery wall switches to `column-count: 2` (`gap: 8px`); `.album-info-grid`, `.album-contact-grid`, and `.footer-min-bottom` align horizontally.
+  - At `768px+`: Drawer primary nav links expand to `36px`; Services & Žeimenos Žirgai boards become 2-column splits (`1fr 1fr`); `.album-intro-grid` splits story left and metadata right; `.footer-editorial-grid` renders its 3 columns (`1.4fr 1fr 1fr`).
+- **Desktop (`1440px` / `@media (min-width: 1024px)`)**:
+  - `.container` caps at `max-width: 1280px` (`--maxw`) with `clamp(16px, 4vw, 48px)` gutters and `112px` (`--sp-7`) vertical section padding.
+  - Home `.album-grid-columns` expands to the 12-column editorial magazine grid (alternating 7-col `4:3` wide + 5-col `4:5` narrow with `112px` vertical offset).
+  - Album `.gallery-grid` expands to `column-count: 3` (`column-gap: 8px`).
+
+---
+
+## 6. Project File Structure & Asset Linking
+
+### Core Stylesheet & Client Scripts
+- `/style.css` — Master stylesheet containing all design tokens and component rules.
+- `/script.js` — Global scroll behavior, transparent hero header toggle (`80px`), 6s hero slideshow & progress bars, drawer menu toggle, `IntersectionObserver` stagger reveals, lazy image fade-in, lightbox viewer & preloading, `200ms` page transitions, Cookiebot production gate, and Firebase Auth diagnostics.
+- `/album-footer.js` — Fallback footer injector synced to the 2-column `.footer-minimal` structure (`frozen-time.html` / `/albums/*`).
+- `/analytics.js`, `/firebase-config.js`, `/google-sheets-service.js`, `/reviews-manager.js`, `/email-templates.js`, `/server.js` — Application backend, Firebase integration, analytics, email templates, and review modules.
+
+### Root HTML Pages (link `href="style.css"` and `src="script.js"`)
+- `/index.html` (`<body class="has-hero">`) — Home hero slideshow, TFP Booking block, Services & Žeimenos Žirgai boards, staggered albums showcase.
+- `/about.html` — Studio/project overview (`Vizija & Estetika`, `DP | CORPORATION`).
+- `/biography.html` — Photographer dossier, chapters `01`–`04`, film award spotlight, action links.
+- `/services.html` — Photography & videography packages, Flatpickr calendar, booking form (also loads Flatpickr CSS/JS).
+- `/tfp-booking.html` — Free TFP session collaboration booking page & Flatpickr scheduling.
+- `/contacts.html` — Direct contact details & Formspree inquiry form.
+- `/frozen-time.html` — Dedicated film showcase (`Frozen Time: What If`).
+- `/review.html` — Verified client review submission & gallery review showcase.
+- `/privacy-policy.html` — Legal privacy policy page.
+- `/terms-of-service.html` — Legal terms of service page.
+- `/admin.html` — Secure Firebase Auth, orders, VMI accounting/A4 invoices, Google Sheets sync, team permissions, and diagnostics (uses `style.css` + `html2pdf.bundle.min.js` + `script.js`).
+
+### Album Pages in `/albums/` (link `href="../style.css"` and `src="../script.js"`)
+All 22 files in `/albums/` use `<body class="has-hero series-*">` with `../` relative navigation paths:
+- `albums/autoshow-kaunas-09-05.html`, `albums/azuolynas.html`, `albums/azuolyno-parkas.html`, `albums/baltoji-kiele.html`, `albums/bmw-e36.html`, `albums/car-meet-2026-05-26.html`, `albums/car-meet-kaunas.html`, `albums/cirkliskis.html`, `albums/gandras.html`, `albums/geles.html`, `albums/moletu-observatorija.html`, `albums/noka.html`, `albums/petrausku-namai.html`, `albums/rundale.html`, `albums/sirvetos-parkas.html`, `albums/sventa.html`, `albums/valdovu-rumai.html`, `albums/vdu-sodas.html`, `albums/winter.html`, `albums/winter-cirkliskis.html`, `albums/winter-sventa.html`, `albums/zeimenos-zirgai.html`.
+
+*(Note: `albums/sirvetos-parkas.html` and `albums/vdu-sodas.html` reference `../script.js` directly.)*
+
+---
+
+## 7. Multilingual & Subdomain Rules
+
+- Supported language versions share identical HTML markup, class names, layout spacing, font family (`Montserrat`), and CSS stylesheet (`/style.css` or `../style.css`):
+  - **LT**: `https://dominikphotofficial.lt` / `https://portfolio.dominikphotofficial.lt`
+  - **EN**: `https://en.dominikphotofficial.lt`
+  - **PL**: `https://pl.dominikphotofficial.lt`
+  - **RU**: `https://ru.dominikphotofficial.lt`
+  - **KR**: `https://kr.dominikphotofficial.lt`
+- **Only translated text copy changes** between language subdomains. Language sites must never define separate stylesheets or custom font overrides.
+- All interactive labels, buttons, menu rows, and grid columns must remain resilient to longer words in Lithuanian and Russian without wrapping into broken buttons or triggering horizontal scroll (`375px+`).
+
+---
+
+## 8. Rules for Future Edits
+
+1. **Use only existing tokens and components**: Reference CSS variables (`--bg`, `--bg-soft`, `--text`, `--text-muted`, `--accent`, `--border`, `--sp-*`, `--fs-*`, `--radius`, `--ease`) and documented component classes in this file.
+2. **Ask before adding new styles**: Do not invent new colors, font sizes, font weights, fonts, pill badges, heavy drop shadows, or custom layout utilities without explicit approval.
+3. **Preserve folder structure and relative links**: Do not create `/shared/theme.css` or reorganize directories; root pages link `style.css` and `script.js`, `/albums/*` pages link `../style.css` and `../script.js`.
+4. **Keep the DP logo in header/footer — never in background**: Retain the `.logo-mark` image (`https://iili.io/fjNLbs4.png`) in the header and editorial footer, and never render logo watermarks behind content or backgrounds.
+5. **Preserve content and responsive parity**: Keep existing copy intact when restyling, ensure all images keep descriptive `alt` text with `loading="lazy"` and natural aspect ratios, and verify zero horizontal overflow at `375px`, `768px`, and `1440px`.
+
+
+ЧАСТЬ 1. Все ссылки на фотографии
+
+0. Логотип и Favicon (используется на всех страницах)
+https://iili.io/fjNLbs4.png
+
+1. Общие и основные страницы (index.html, services.html, tfp-booking.html, about.html, biography.html, frozen-time.html)
+OG / обложки и основные разделы:
+
+https://i.postimg.cc/65bZ2sxk/Frozen-time.png (OG / Twitter cover на index.html)
+
+https://i.postimg.cc/Jnv9KRSs/IMG-7441.jpg (баннер бронирования на index.html, фото на about.html, OG-обложка services.html и tfp-booking.html)
+
+https://i.postimg.cc/GtJB0hqn/Portrait-nuotrauka-1.jpg (портрет автора — biography.html, frozen-time.html)
+
+https://i.postimg.cc/9FtL9g39/Frozen-Time-poster.png (постер фильма «Frozen Time: What If» — frozen-time.html, biography.html)
+
+Hero-слайдшоу на главной (index.html):
+
+https://i.postimg.cc/B60zcQNx/street-nature-01.jpg
+
+https://i.postimg.cc/PfSbZTLR/IMG-9538.jpg
+
+https://i.postimg.cc/YSRMtRps/autoshow-kaunas-107.jpg
+
+Услуги и TFP (services.html, tfp-booking.html):
+
+https://i.postimg.cc/tgDGWFNT/paslaugos-fotosesijos-01.jpg (Mini Fotosesija / TFP)
+
+https://i.postimg.cc/Dz7KSxL3/paslaugos-fotosesijos-02.jpg (Standartinė Fotosesija)
+
+https://i.postimg.cc/3w3Hktmw/paslaugos-fotosesijos-03.jpg (Maksi Fotosesija)
+
+https://i.postimg.cc/DZsSRbfJ/paslaugos-fotosesijos-06.jpg (Videografija)
+
+https://i.postimg.cc/PqvGXfk5/zirgai-zeimenos-02.jpg (Žeimenos Žirgai promo)
+
+https://i.postimg.cc/xT2XxY4R/IMG-6808.jpg (Portretinė / TFP Kūryba 1)
+
+https://i.postimg.cc/RVBWs9DQ/IMG-6811.jpg (Kūrybinė / TFP Kūryba 2)
+
+https://i.postimg.cc/90JLjs3J/IMG-7652.jpg (Car Meet Kaunas на services.html)
+
+https://i.postimg.cc/x8pRF86C/cirkliskis-01.jpg (Cirkliškio Dvaras на services.html)
+
+(На index.html в карточках альбомов также используются обложки соответствующих альбомов — все они включены в списки альбомов ниже).
+
+2. Все альбомы (/albums/*.html)
+
+albums/autoshow-kaunas-09-05.html (109 фото)
+https://i.postimg.cc/YSRMtRps/autoshow-kaunas-107.jpg (обложка / OG)
+
+https://i.postimg.cc/brNGzdfp/autoshow-kaunas-108.jpg
+
+https://i.postimg.cc/02ZQC7KQ/autoshow-kaunas-110.jpg
+
+https://i.postimg.cc/XJ67vqF2/autoshow-kaunas-112.jpg
+
+https://i.postimg.cc/76NDYVqT/autoshow-kaunas-113.jpg
+
+https://i.postimg.cc/JtVyVxx1/autoshow-kaunas-114.jpg
+
+https://i.postimg.cc/pdWyQpyd/autoshow-kaunas-115.jpg
+
+https://i.postimg.cc/63TJtNb7/autoshow-kaunas-117.jpg
+
+https://i.postimg.cc/BQRW3y2g/autoshow-kaunas-118.jpg
+
+https://i.postimg.cc/65MP6PR1/autoshow-kaunas-120.jpg
+
+https://i.postimg.cc/MTJKGHRn/autoshow-kaunas-121.jpg
+
+https://i.postimg.cc/cC9v6Z0z/autoshow-kaunas-122.jpg
+
+https://i.postimg.cc/DwgqLWn5/autoshow-kaunas-123.jpg
+
+https://i.postimg.cc/BbXqYFGb/autoshow-kaunas-124.jpg
+
+https://i.postimg.cc/2SPCHyHY/IMG-2854.jpg
+
+https://i.postimg.cc/W34FVhPM/IMG-2855.jpg
+
+https://i.postimg.cc/C1dHFFym/IMG-2856.jpg
+
+https://i.postimg.cc/05bcvCx4/IMG-2857.jpg
+
+https://i.postimg.cc/X7xJg9Bj/IMG-2858.jpg
+
+https://i.postimg.cc/v8c3yvMj/IMG-2859.jpg
+
+https://i.postimg.cc/YCJtX0db/IMG-2860.jpg
+
+https://i.postimg.cc/BvH4R3ys/IMG-2861.jpg
+
+https://i.postimg.cc/YCk6vNK4/IMG-2863.jpg
+
+https://i.postimg.cc/5tKLKZHg/IMG-2864.jpg
+
+https://i.postimg.cc/QVGRQK87/IMG-2865.jpg
+
+https://i.postimg.cc/SRC9sRgR/IMG-2866.jpg
+
+https://i.postimg.cc/mgTnTst3/IMG-2867.jpg
+
+https://i.postimg.cc/1tL6swry/IMG-2868.jpg
+
+https://i.postimg.cc/1zXNFJWw/IMG-2869.jpg
+
+https://i.postimg.cc/1XxW2xkx/IMG-2870.jpg
+
+https://i.postimg.cc/Znkf2kG9/IMG-2871.jpg
+
+https://i.postimg.cc/W1Wds0s8/IMG-2872.jpg
+
+https://i.postimg.cc/SQ2RG0QZ/IMG-2873.jpg
+
+https://i.postimg.cc/52qmg7qK/IMG-2874.jpg
+
+https://i.postimg.cc/tJw9LgXg/IMG-2876.jpg
+
+https://i.postimg.cc/tRWnF1zk/IMG-2877.jpg
+
+https://i.postimg.cc/V6ZGRrRr/IMG-2878.jpg
+
+https://i.postimg.cc/Znkf2kGv/IMG-2879.jpg
+
+https://i.postimg.cc/nLDhZBsJ/IMG-2880.jpg
+
+https://i.postimg.cc/c6yKyhhC/IMG-2881.jpg
+
+https://i.postimg.cc/0y8Sk8Dp/IMG-2882.jpg
+
+https://i.postimg.cc/t4H5hQ6f/IMG-2883.jpg
+
+https://i.postimg.cc/G3yGzgby/IMG-2884.jpg
+
+https://i.postimg.cc/25g3ZmbG/IMG-2885.jpg
+
+https://i.postimg.cc/wBHGTdMx/IMG-2886.jpg
+
+https://i.postimg.cc/KvjNf8kr/IMG-3144.jpg
+
+https://i.postimg.cc/Dy3sNQzj/IMG-3145.jpg
+
+https://i.postimg.cc/WbzjTgCh/IMG-3146.jpg
+
+https://i.postimg.cc/fLPCX4W4/IMG-3147.jpg
+
+https://i.postimg.cc/NfntMLvR/IMG-3148.jpg
+
+https://i.postimg.cc/mkGvMF28/IMG-3149.jpg
+
+https://i.postimg.cc/YqF4M5T5/IMG-3150.jpg
+
+https://i.postimg.cc/SNL8bXXB/IMG-3151.jpg
+
+https://i.postimg.cc/8Ccrvtyg/IMG-3152.jpg
+
+https://i.postimg.cc/RhVm3H0p/IMG-3153.jpg
+
+https://i.postimg.cc/MKBcqChJ/IMG-3154.jpg
+
+https://i.postimg.cc/5Ny1bLTN/IMG-3155.jpg
+
+https://i.postimg.cc/cJ0tDF9b/IMG-3156.jpg
+
+https://i.postimg.cc/SNYSccrR/IMG-3157.jpg
+
+https://i.postimg.cc/wjck2fc7/IMG-3158.jpg
+
+https://i.postimg.cc/xjhg1b1R/IMG-3159.jpg
+
+https://i.postimg.cc/pr901WGk/IMG-3161.jpg
+
+https://i.postimg.cc/j5Ttb9Yb/IMG-3162.jpg
+
+https://i.postimg.cc/fb9RZm3b/IMG-3163.jpg
+
+https://i.postimg.cc/d3XfqkZK/IMG-3164.jpg
+
+https://i.postimg.cc/FK3NwvqV/IMG-3165.jpg
+
+https://i.postimg.cc/ncnr73zT/IMG-3166.jpg
+
+https://i.postimg.cc/5NsBFdsb/IMG-3167.jpg
+
+https://i.postimg.cc/Pq514tqL/IMG-3168.jpg
+
+https://i.postimg.cc/Kj6Rtf3C/IMG-3169.jpg
+
+https://i.postimg.cc/nMbsb22f/IMG-3170.jpg
+
+https://i.postimg.cc/Jzd5SVXS/IMG-3171.jpg
+
+https://i.postimg.cc/RCHCHcG3/IMG-3172.jpg
+
+https://i.postimg.cc/LhKqKDDn/IMG-3173.jpg
+
+https://i.postimg.cc/LXhK2MQy/IMG-3174.jpg
+
+https://i.postimg.cc/sxdBty3P/IMG-3175.jpg
+
+https://i.postimg.cc/7YqvZ7Rx/IMG-3177.jpg
+
+https://i.postimg.cc/SN9d2Nn6/IMG-3178.jpg
+
+https://i.postimg.cc/pX3Nv7KJ/IMG-3179.jpg
+
+https://i.postimg.cc/6p18BBYm/IMG-3181.jpg
+
+https://i.postimg.cc/qqRfBHmx/IMG-3182.jpg
+
+https://i.postimg.cc/LXhX7wzw/IMG-3183.jpg
+
+https://i.postimg.cc/PJtDP2Z6/IMG-3184.jpg
+
+https://i.postimg.cc/2Sw4hqrP/IMG-3185.jpg
+
+https://i.postimg.cc/rskmfJ99/IMG-3187.jpg
+
+https://i.postimg.cc/kgh277Td/IMG-3189.jpg
+
+https://i.postimg.cc/cHcZ4m0k/IMG-3190.jpg
+
+https://i.postimg.cc/J760NrWL/IMG-3191.jpg
+
+https://i.postimg.cc/4yNGK93h/IMG-3192.jpg
+
+https://i.postimg.cc/43xp5J3y/IMG-3193.jpg
+
+https://i.postimg.cc/59CLpKf1/IMG-3194.jpg
+
+https://i.postimg.cc/ZnyGvxSF/IMG-3195.jpg
+
+https://i.postimg.cc/CL0B7FvN/IMG-3196.jpg
+
+https://i.postimg.cc/6pDBHqHw/IMG-3197.jpg
+
+https://i.postimg.cc/NfQhjTnc/IMG-3198.jpg
+
+https://i.postimg.cc/3NvXvnxd/IMG-3199.jpg
+
+https://i.postimg.cc/63S3NccQ/IMG-3200.jpg
+
+https://i.postimg.cc/WbsR1ryt/IMG-3201.jpg
+
+https://i.postimg.cc/J4XxD4yL/IMG-3202.jpg
+
+https://i.postimg.cc/Y9QVpqfG/IMG-3203.jpg
+
+https://i.postimg.cc/BnGj6h0P/IMG-3204.jpg
+
+https://i.postimg.cc/Gm9kF7fK/IMG-3205.jpg
+
+https://i.postimg.cc/J0ZXn0p6/IMG-3206.jpg
+
+https://i.postimg.cc/0jHTbXF8/IMG-3207.jpg
+
+https://i.postimg.cc/ZR93GV3p/IMG-3208.jpg
+
+https://i.postimg.cc/C5sKXqv4/IMG-3209.jpg
+
+https://i.postimg.cc/PrHHv0CH/IMG-3210.jpg
+
+https://i.postimg.cc/KY2B6Gz9/IMG-3211.jpg
+
+https://i.postimg.cc/Pr1bf3cs/IMG-3212.jpg
+
+albums/azuolynas.html (51 фото)
+https://i.postimg.cc/B60zcQNx/street-nature-01.jpg (обложка / OG)
+
+https://i.postimg.cc/XJkz2SD9/street-nature-02.jpg
+
+https://i.postimg.cc/3RTqCJ9C/street-nature-03.jpg
+
+https://i.postimg.cc/3RTqCJ91/street-nature-04.jpg
+
+https://i.postimg.cc/hj15CW38/street-nature-05.jpg
+
+https://i.postimg.cc/hGxwd78F/street-nature-06.jpg
+
+https://i.postimg.cc/7YYpWh4N/street-nature-09.jpg
+
+https://i.postimg.cc/GhhZ5tRx/street-nature-10.jpg
+
+https://i.postimg.cc/ncc6Prxq/street-nature-11.jpg
+
+https://i.postimg.cc/jddGF2Tc/street-nature-12.jpg
+
+https://i.postimg.cc/NffWzFtN/street-nature-13.jpg
+
+https://i.postimg.cc/gkkfTjp7/street-nature-14.jpg
+
+https://i.postimg.cc/c49VyW1h/street-nature-15.jpg
+
+https://i.postimg.cc/ZK71tmYF/street-nature-16.jpg
+
+https://i.postimg.cc/xTxWDQjs/street-nature-17.jpg
+
+https://i.postimg.cc/TY7ZMx24/street-nature-18.jpg
+
+https://i.postimg.cc/Pr3BsHfF/street-nature-19.jpg
+
+https://i.postimg.cc/DyjtkhfH/street-nature-20.jpg
+
+https://i.postimg.cc/X7HTSW7M/street-nature-21.jpg
+
+https://i.postimg.cc/HsZfDmsT/street-nature-22.jpg
+
+https://i.postimg.cc/bNCKcPNy/street-nature-23.jpg
+
+https://i.postimg.cc/7Ysp84YY/street-nature-24.jpg
+
+https://i.postimg.cc/rFnvXTFw/street-nature-25.jpg
+
+https://i.postimg.cc/Z5WXJQCh/street-nature-26.jpg
+
+https://i.postimg.cc/HkrFTNVd/street-nature-27.jpg
+
+https://i.postimg.cc/Gm46bfH3/street-nature-28.jpg
+
+https://i.postimg.cc/T3KBTspd/street-nature-29.jpg
+
+https://i.postimg.cc/4xYjX0mx/street-nature-30.jpg
+
+https://i.postimg.cc/bwZ4q5sD/street-nature-31.jpg
+
+https://i.postimg.cc/Z5WXJQCy/street-nature-32.jpg
+
+https://i.postimg.cc/BnjRJzXK/street-nature-33.jpg
+
+https://i.postimg.cc/qvNWpFz2/street-nature-34.jpg
+
+https://i.postimg.cc/DwRH0cXS/street-nature-35.jpg
+
+https://i.postimg.cc/138bydfp/street-nature-36.jpg
+
+https://i.postimg.cc/JzSv0Qkk/street-nature-38.jpg
+
+https://i.postimg.cc/NjZSFxH8/street-nature-39.jpg
+
+https://i.postimg.cc/kgLzGyby/street-nature-40.jpg
+
+https://i.postimg.cc/13b2XKqM/street-nature-41.jpg
+
+https://i.postimg.cc/L8Gw5V1C/street-nature-42.jpg
+
+https://i.postimg.cc/QdvwCqTP/street-nature-43.jpg
+
+https://i.postimg.cc/QdvwCqTv/street-nature-45.jpg
+
+https://i.postimg.cc/9fTS7qdL/street-nature-46.jpg
+
+https://i.postimg.cc/QM5PTWQP/street-nature-47.jpg
+
+https://i.postimg.cc/xdH7zbvB/street-nature-48.jpg
+
+https://i.postimg.cc/q7nY3CcT/street-nature-49.jpg
+
+https://i.postimg.cc/7L7c2T16/street-nature-50.jpg
+
+https://i.postimg.cc/9fTS7qPf/street-nature-51.jpg
+
+https://i.postimg.cc/HL5Ky70j/street-nature-52.jpg
+
+https://i.postimg.cc/SshP7NVk/street-nature-53.jpg
+
+https://i.postimg.cc/85SYBPw7/street-nature-54.jpg
+
+https://i.postimg.cc/W3vy6bS0/street-nature-55.jpg
+
+albums/azuolyno-parkas.html (55 фото)
+https://i.postimg.cc/zXFTVDHQ/street-azuolynas-01.jpg (обложка / OG)
+
+https://i.postimg.cc/76Jg6gS1/street-azuolynas-01.jpg
+
+https://i.postimg.cc/rFN5KyRv/street-azuolynas-02.jpg
+
+https://i.postimg.cc/gJLvJv3N/street-azuolynas-02.jpg
+
+https://i.postimg.cc/qMx2zB6W/street-azuolynas-03.jpg
+
+https://i.postimg.cc/rmRSmS5h/street-azuolynas-03.jpg
+
+https://i.postimg.cc/QxJcHNWj/street-azuolynas-04.jpg
+
+https://i.postimg.cc/J0wjBGqM/street-azuolynas-04.jpg
+
+https://i.postimg.cc/k4Rx4xWp/street-azuolynas-05.jpg
+
+https://i.postimg.cc/L84Lfdjr/street-azuolynas-05.jpg
+
+https://i.postimg.cc/MpZVRkyp/street-azuolynas-06.jpg
+
+https://i.postimg.cc/MHk1jvYN/street-azuolynas-06.jpg
+
+https://i.postimg.cc/x1jMHrK8/street-azuolynas-07.jpg
+
+https://i.postimg.cc/cCqf8rmx/street-azuolynas-07.jpg
+
+https://i.postimg.cc/KjnB7xqY/street-azuolynas-08.jpg
+
+https://i.postimg.cc/P5fYZGmN/street-azuolynas-08.jpg
+
+https://i.postimg.cc/fyxm7D20/street-azuolynas-09.jpg
+
+https://i.postimg.cc/g2c8R9v8/street-azuolynas-09.jpg
+
+https://i.postimg.cc/tJhWdpSF/street-azuolynas-10.jpg
+
+https://i.postimg.cc/XYNdFMwr/street-azuolynas-10.jpg
+
+https://i.postimg.cc/KcLPhDZp/street-azuolynas-11.jpg
+
+https://i.postimg.cc/pLVz8NDh/street-azuolynas-11.jpg
+
+https://i.postimg.cc/nV74fGHy/street-azuolynas-12.jpg
+
+https://i.postimg.cc/6p6nRsdR/street-azuolynas-12.jpg
+
+https://i.postimg.cc/fWXcQfzw/street-azuolynas-13.jpg
+
+https://i.postimg.cc/pL08J0Zr/street-azuolynas-13.jpg
+
+https://i.postimg.cc/dQd2cjsD/street-azuolynas-14.jpg
+
+https://i.postimg.cc/g2MRHMDn/street-azuolynas-14.jpg
+
+https://i.postimg.cc/X7bwjBqv/street-azuolynas-15.jpg
+
+https://i.postimg.cc/y8f9yfPS/street-azuolynas-15.jpg
+
+https://i.postimg.cc/7ZB7nBVn/street-azuolynas-16.jpg
+
+https://i.postimg.cc/kXmxJRGJ/street-azuolynas-16.jpg
+
+https://i.postimg.cc/CxvDsvNm/street-azuolynas-17.jpg
+
+https://i.postimg.cc/gkWvzLjJ/street-azuolynas-17.jpg
+
+https://i.postimg.cc/5t6z7w7K/street-azuolynas-18.jpg
+
+https://i.postimg.cc/JhGX6b6q/street-azuolynas-19.jpg
+
+https://i.postimg.cc/x1sH3sRp/street-azuolynas-20.jpg
+
+https://i.postimg.cc/7YkgHJhh/street-azuolynas-20.jpg
+
+https://i.postimg.cc/RZPfLPRY/street-azuolynas-21.jpg
+
+https://i.postimg.cc/9FhGmw0r/street-azuolynas-22.jpg
+
+https://i.postimg.cc/qvmnxmLb/street-azuolynas-23.jpg
+
+https://i.postimg.cc/DyTqv40S/street-azuolynas-24.jpg
+
+https://i.postimg.cc/7YkgHJhT/street-azuolynas-25.jpg
+
+https://i.postimg.cc/DyTqv40L/street-azuolynas-27.jpg
+
+https://i.postimg.cc/m2sQL1k7/street-azuolynas-28.jpg
+
+https://i.postimg.cc/gkWvzLjv/street-azuolynas-29.jpg
+
+https://i.postimg.cc/DyTqv40c/street-azuolynas-30.jpg
+
+https://i.postimg.cc/YqzQh2Lf/street-azuolynas-32.jpg
+
+https://i.postimg.cc/8PmLjkfL/street_azuolynas_33.jpg (и обложка карточки на index.html)
+
+https://i.postimg.cc/J4LbrH0T/street-azuolynas-34.jpg
+
+https://i.postimg.cc/CLgjhn5m/street-azuolynas-35.jpg
+
+https://i.postimg.cc/pXJKpV5B/street-azuolynas-36.jpg
+
+https://i.postimg.cc/RVLwNCJR/street-azuolynas-37.jpg
+
+https://i.postimg.cc/CLsbzMnm/street-azuolynas-38.jpg
+
+https://i.postimg.cc/hP1Vf4Q5/street-azuolynas-39.jpg
+
+albums/baltoji-kiele.html (8 фото)
+https://i.postimg.cc/KYbYwNkK/bird-01.jpg (обложка / OG)
+
+https://i.postimg.cc/1zKzQqwv/bird-02.jpg
+
+https://i.postimg.cc/1tf4rzVM/bird-03.jpg
+
+https://i.postimg.cc/Xv2p55qp/bird-04.jpg
+
+https://i.postloader.cc/gJQjSPvp/bird-05.jpg (обрати внимание: здесь в коде указан домен i.postloader.cc вместо i.postimg.cc — проверь, открывается ли это фото)
+
+https://i.postimg.cc/GtvLXTLP/bird-06.jpg
+
+https://i.postimg.cc/hPqPfss2/bird-07.jpg
+
+https://i.postimg.cc/9FtXT9NC/bird-08.jpg
+
+albums/bmw-e36.html (6 фото)
+https://i.postimg.cc/vTpSGtSm/BMWE36-01.jpg (обложка / OG)
+
+https://i.postimg.cc/wxPr59Td/BMWE36-02.jpg
+
+https://i.postimg.cc/C1x271qw/BMWE36-03.jpg
+
+https://i.postimg.cc/bJVBBhxk/BMWE36-04.jpg
+
+https://i.postimg.cc/6px1Szvj/BMWE36-05.jpg
+
+https://i.postimg.cc/mkc5x5jq/BMWE36-06.jpg
+
+albums/car-meet-2026-05-26.html (37 фото)
+https://i.postimg.cc/90JLjs3J/IMG-7652.jpg (обложка / OG)
+
+https://i.postimg.cc/GtqX160j/IMG-7659.jpg
+
+https://i.postimg.cc/sxVTqsLg/IMG-7660.jpg
+
+https://i.postimg.cc/Y0bdwTcF/IMG-7662.jpg
+
+https://i.postimg.cc/QNb45KBs/IMG-7663.jpg
+
+https://i.postimg.cc/qqk1S4Fp/IMG-7666.jpg
+
+https://i.postimg.cc/nr03tN8T/IMG-7667.jpg
+
+https://i.postimg.cc/nVkR79sc/IMG-7671.jpg
+
+https://i.postimg.cc/8c1Z9NY7/IMG-7674.jpg
+
+https://i.postimg.cc/pr2s4RSR/IMG-7678.jpg
+
+https://i.postimg.cc/QCXfwhzr/IMG-7679.jpg
+
+https://i.postimg.cc/hvp2qNFj/IMG-7680.jpg
+
+https://i.postimg.cc/L8qNryxh/IMG-7857.jpg
+
+https://i.postimg.cc/qvtj9m14/IMG-8236.jpg
+
+https://i.postimg.cc/NG4JT2yQ/IMG-8249.jpg
+
+https://i.postimg.cc/RVpgprQP/IMG-8255.jpg
+
+https://i.postimg.cc/zG905nQ4/IMG-8256.jpg
+
+https://i.postimg.cc/mgc80dmQ/IMG-8264.jpg
+
+https://i.postimg.cc/jqXgNnWN/IMG-8274.jpg
+
+https://i.postimg.cc/CLrcrysK/IMG-8275.jpg
+
+https://i.postimg.cc/GhmMj3YF/IMG-8292.jpg
+
+https://i.postimg.cc/sgBwtnTB/IMG-8297.jpg
+
+https://i.postimg.cc/J4YpYw5z/IMG-8313.jpg
+
+https://i.postimg.cc/QxYfYLJZ/IMG-8319.jpg
+
+https://i.postimg.cc/Pr56MfZS/IMG-8324.jpg
+
+https://i.postimg.cc/SN1g107B/IMG-8325.jpg
+
+https://i.postimg.cc/rwvQcSHB/IMG-8327.jpg
+
+https://i.postimg.cc/13gJLWvm/IMG-8336.jpg
+
+https://i.postimg.cc/3xPn7gqL/IMG-8341.jpg
+
+https://i.postimg.cc/BQnhCZDb/IMG-8345.jpg
+
+https://i.postimg.cc/QdR0spz7/IMG-8362.jpg
+
+https://i.postimg.cc/sDgnJfS4/IMG-8363.jpg
+
+https://i.postimg.cc/kgVfkjTW/IMG-8368.jpg
+
+https://i.postimg.cc/L8rNRzWb/IMG-8373.jpg
+
+https://i.postimg.cc/QNb45KBt/IMG-8377.jpg
+
+https://i.postimg.cc/SxwDqWP7/IMG-8394.jpg
+
+https://i.postimg.cc/bNw6RYb6/IMG-8396.jpg
+
+albums/car-meet-kaunas.html (4 обложки под-альбомов)
+https://i.postimg.cc/90JLjs3J/IMG-7652.jpg
+
+https://i.postimg.cc/vTpSGtSm/BMWE36-01.jpg
+
+https://i.postimg.cc/28SthTZg/noka-car-01.jpg
+
+https://i.postimg.cc/YSRMtRps/autoshow-kaunas-107.jpg
+
+albums/cirkliskis.html (14 фото)
+https://i.postimg.cc/x8pRF86C/cirkliskis-01.jpg (обложка / OG)
+
+https://i.postimg.cc/6QzGhSj6/cirkliskis-02.jpg
+
+https://i.postimg.cc/g0pvs3Gs/cirkliskis-03.jpg
+
+https://i.postimg.cc/Hxx8v2Rw/cirkliskis-04.jpg
+
+https://i.postimg.cc/25jxmng6/cirkliskis-05.jpg
+
+https://i.postimg.cc/fRCxHJkh/cirkliskis-06.jpg
+
+https://i.postimg.cc/J4b3kTL0/cirkliskis-07.jpg
+
+https://i.postimg.cc/sx5W52bq/cirkliskis-08.jpg
+
+https://i.postimg.cc/MKbRTv7j/cirkliskis-09.jpg
+
+https://i.postimg.cc/YSjmbRJ1/cirkliskis-10-Glorija-Jancauskaite.jpg
+
+https://i.postimg.cc/D03JfTmg/cirkliskis-11.jpg
+
+https://i.postimg.cc/C1k5QQJf/cirkliskis-12.jpg
+
+https://i.postimg.cc/XJSdqFzd/cirkliskis-13.jpg
+
+https://i.postimg.cc/JhtPZbxF/cirkliskis-14.jpg
+
+albums/gandras.html (11 фото)
+https://i.postimg.cc/KYtMgjLT/Gandras-01.jpg (обложка / OG)
+
+https://i.postimg.cc/L67YCL3f/Gandras-02.jpg
+
+https://i.postimg.cc/NFsmttKH/Gandras-03.jpg
+
+https://i.postimg.cc/9Q74v0Lk/Gandras-04.jpg
+
+https://i.postimg.cc/s2PMg8d9/Gandras-05.jpg
+
+https://i.postimg.cc/d1BZ4f5t/Gandras-06.jpg
+
+https://i.postimg.cc/501F5JqR/Gandras-07.jpg
+
+https://i.postimg.cc/Nj9TBpjp/Gandras-08.jpg
+
+https://i.postimg.cc/ZYH6cWQF/Gandras-09.jpg
+
+https://i.postimg.cc/CLKk6FTy/Gandras-10.jpg
+
+https://i.postimg.cc/RVbfkj4W/Gandras-11.jpg
+
+albums/geles.html (26 фото)
+https://i.postimg.cc/Dy2Q1ryc/Flower-01.jpg (обложка / OG)
+
+https://i.postimg.cc/mrM1vkgD/Flower-02.jpg
+
+https://i.postimg.cc/zXthW4QJ/Flower-03.jpg
+
+https://i.postimg.cc/J08N6J3M/Flower-04.jpg
+
+https://i.postimg.cc/VNSWdzLQ/Flower-05.jpg
+
+https://i.postimg.cc/x887dW7X/Flower-06.jpg
+
+https://i.postimg.cc/7YTsQMyr/Flower-07.jpg
+
+https://i.postimg.cc/L6nK41Kx/Flower-08.jpg
+
+https://i.postimg.cc/bJgcr0wB/Flower-09.jpg
+
+https://i.postimg.cc/SsD3kyZ0/Flower-10.jpg
+
+https://i.postimg.cc/sXVqkB49/Flower-11.jpg
+
+https://i.postimg.cc/9FK3DQcC/Flower-12.jpg
+
+https://i.postimg.cc/DZn37pnG/Flower-13.jpg
+
+https://i.postimg.cc/rs5hzMjF/Flower-14.jpg
+
+https://i.postimg.cc/V6xGYdjV/Flower-15.jpg
+
+https://i.postimg.cc/SxhB6tYv/Flower-16.jpg
+
+https://i.postimg.cc/SQ1JRC55/Flower-17.jpg
+
+https://i.postimg.cc/SsyJ2rm0/Flower-18.jpg
+
+https://i.postimg.cc/GmG2XN2w/Flower-19.jpg
+
+https://i.postimg.cc/sgjWZsmH/Flower-20.jpg
+
+https://i.postimg.cc/c44YvdX9/Flower-21.jpg
+
+https://i.postimg.cc/02J2N37M/Flower-22.jpg
+
+https://i.postimg.cc/cJ5LCNk3/Flower-23.jpg
+
+https://i.postimg.cc/qBcXtb0R/Flower-24.jpg
+
+https://i.postimg.cc/nrWW93b0/Flower-25.jpg
+
+https://i.postimg.cc/zBnF5pp9/flower-26.jpg
+
+albums/moletu-observatorija.html (3 фото)
+https://i.postimg.cc/3x3PgfJH/Teleskopas-165-cm.png (обложка / OG)
+
+https://i.postimg.cc/RV7kJxmR/Teleskopas-165-cm-02.png
+
+https://i.postimg.cc/JzKSK3GH/Teleskopas-165-cm-03.png
+
+albums/noka.html (4 фото)
+https://i.postimg.cc/28SthTZg/noka-car-01.jpg (обложка / OG)
+
+https://i.postimg.cc/vZ1SSBXz/noka-car-02.jpg
+
+https://i.postimg.cc/xTp4RHG8/noka-car-03.jpg
+
+https://i.postimg.cc/8zqn8S0V/noka-car-04.jpg
+
+albums/petrausku-namai.html (14 фото)
+https://i.postimg.cc/8k0XLvTx/miko-ir-kipro-petrausku-namai-01.jpg (обложка / OG)
+
+https://i.postimg.cc/VL0GgN6v/miko-ir-kipro-petrausku-namai-02.jpg
+
+https://i.postimg.cc/DwqCVY1K/miko-ir-kipro-petrausku-namai-03.jpg
+
+https://i.postimg.cc/TPftTqc5/miko-ir-kipro-petrausku-namai-04.jpg
+
+https://i.postimg.cc/wBpG7d9v/miko-ir-kipro-petrausku-namai-05.jpg
+
+https://i.postimg.cc/G2M778G8/miko-ir-kipro-petrausku-namai-06.jpg
+
+https://i.postimg.cc/GtHMZLxM/miko-ir-kipro-petrausku-namai-07.jpg
+
+https://i.postimg.cc/qqSmrPmp/miko-ir-kipro-petrausku-namai-08.jpg
+
+https://i.postimg.cc/Ls30P0sV/miko-ir-kipro-petrausku-namai-09.jpg
+
+https://i.postimg.cc/0jQ3PdP0/miko-ir-kipro-petrausku-namai-10.jpg
+
+https://i.postimg.cc/9FDSkpxW/miko-ir-kipro-petrausku-namai-11.jpg
+
+https://i.postimg.cc/xjxhg73x/miko-ir-kipro-petrausku-namai-12.jpg
+
+https://i.postimg.cc/VvVh6rNQ/miko-ir-kipro-petrausku-namai-13.jpg
+
+https://i.postimg.cc/g29MTPXD/miko-ir-kipro-petrausku-namai-14.jpg
+
+albums/rundale.html (24 фото)
+https://i.postimg.cc/SNJR5jwY/IMG-5630.jpg (обложка / OG)
+
+https://i.postimg.cc/qMzqYg9V/LATVIJA-2025-31.jpg
+
+https://i.postimg.cc/4N74Pq9v/LATVIJA-2025-32.jpg
+
+https://i.postimg.cc/4NqyTsg1/LATVIJA-2025-33.jpg (обложка карточки на index.html)
+
+https://i.postimg.cc/xCfTPdvT/LATVIJA-2025-34.jpg
+
+https://i.postimg.cc/7LyLf9b2/LATVIJA-2025-36.jpg
+
+https://i.postimg.cc/28VyJ3PN/LATVIJA-2025-37.jpg
+
+https://i.postimg.cc/nzFc1L4J/LATVIJA-2025-38.jpg
+
+https://i.postimg.cc/d0vqq0S7/LATVIJA-2025-39.jpg
+
+https://i.postimg.cc/sx1jt0HS/LATVIJA-2025-40.jpg
+
+https://i.postimg.cc/GhVt1dCG/LATVIJA-2025-41.jpg
+
+https://i.postimg.cc/JhqRtW95/LATVIJA-2025-42.jpg
+
+https://i.postimg.cc/vHJYNhrS/LATVIJA-2025-44.jpg
+
+https://i.postimg.cc/ZqZTTqDT/LATVIJA-2025-46.jpg
+
+https://i.postimg.cc/52z04T4k/LATVIJA-2025-48.jpg
+
+https://i.postimg.cc/nhmzFgF1/LATVIJA-2025-49.jpg
+
+https://i.postimg.cc/q7Lpgd9Z/LATVIJA-2025-50.jpg
+
+https://i.postimg.cc/6QNQycqk/LATVIJA-2025-54.jpg
+
+https://i.postimg.cc/jSyx0fvV/LATVIJA-2025-55.jpg
+
+https://i.postimg.cc/3R8JZwXR/LATVIJA-2025-56.jpg
+
+https://i.postimg.cc/tCZRkwxj/LATVIJA-2025-57.jpg
+
+https://i.postimg.cc/J4G0gt9X/LATVIJA-2025-59.jpg
+
+https://i.postimg.cc/28skKGQM/LATVIJA-2025-60.jpg
+
+https://i.postimg.cc/zGhBz6zs/LATVIJA-2025-61.jpg
+
+albums/sirvetos-parkas.html (13 фото)
+https://i.postimg.cc/X7gd6GTN/srp-01.jpg (обложка / OG)
+
+https://i.postimg.cc/NF6TM5F4/srp-02.jpg (обложка карточки на index.html)
+
+https://i.postimg.cc/8ztRMJHX/srp-03.jpg
+
+https://i.postimg.cc/TPKDbkhh/srp-04.jpg
+
+https://i.postimg.cc/SxT9J0Sw/srp-05.jpg
+
+https://i.postimg.cc/wvsLCWdn/srp-06.jpg
+
+https://i.postimg.cc/Nftmn7CP/srp-07.jpg
+
+https://i.postimg.cc/WzLgTMNz/srp-08.jpg
+
+https://i.postimg.cc/0NjpfkXk/srp-09.jpg
+
+https://i.postimg.cc/QMzcY2vp/srp-10.jpg
+
+https://i.postimg.cc/Wpg0Sf8k/srp-11.jpg
+
+https://i.postimg.cc/mDM1XtYs/srp-12.jpg
+
+https://i.postimg.cc/VN2bWjbg/srp-13.jpg
+
+albums/sventa.html (18 фото)
+https://i.postimg.cc/QM6Nbm4p/venta-0.jpg (обложка / OG)
+
+https://i.postimg.cc/Gp3hGVQL/venta-2.jpg
+
+https://i.postimg.cc/Dz72BwHL/sventa-01.jpg
+
+https://i.postimg.cc/2Sr6XGB1/sventa-02.jpg
+
+https://i.postimg.cc/FFbXn4bx/sventa-03.jpg
+
+https://i.postimg.cc/28wbYgYQ/sventa-04.jpg
+
+https://i.postimg.cc/vZTBsB3y/sventa-05.jpg
+
+https://i.postimg.cc/cJVGP15F/sventa-06.jpg
+
+https://i.postimg.cc/QdCLtK26/sventa-07.jpg
+
+https://i.postimg.cc/jqck7dQB/sventa-08.jpg
+
+https://i.postimg.cc/d35HP4VJ/sventa-09.jpg
+
+https://i.postimg.cc/QChwrFgJ/sventa-10.jpg
+
+https://i.postimg.cc/LXzw7tPs/sventa-11.jpg
+
+https://i.postimg.cc/FzpqFhD5/sventa-12.jpg
+
+https://i.postimg.cc/jqhdnN1K/sventa-13.jpg
+
+https://i.postimg.cc/k4FKLGgC/sventa-14.jpg
+
+https://i.postimg.cc/pLcHYJQb/sventa-15.jpg
+
+https://i.postimg.cc/qMtg3gH7/sventa-16.jpg
+
+albums/valdovu-rumai.html (10 фото)
+https://i.postimg.cc/C5XjhNy7/Vilniaus-muziejus.png (обложка / OG)
+
+https://i.postimg.cc/Xqpf6PPr/Vilniaus-muziejus-01.png
+
+https://i.postimg.cc/85CWL3Nc/Vilniaus-muziejus-02.png
+
+https://i.postimg.cc/bJvb1Mpt/Vilniaus-muziejus-03.png
+
+https://i.postimg.cc/pdRKLrSQ/Vilniaus-muziejus-04.png
+
+https://i.postimg.cc/TwPmnSfF/Vilniaus-muziejus-05.png
+
+https://i.postimg.cc/xCdHL7nM/Vilniaus-muziejus-06.png
+
+https://i.postimg.cc/PrvW6BZ4/Vilniaus-muziejus-07.png
+
+https://i.postimg.cc/y8qF2vy4/Vilniaus-muziejus-08.png
+
+https://i.postimg.cc/66mVf97f/Vilniaus-muziejus-09.png
+
+albums/vdu-sodas.html (18 фото)
+https://i.postimg.cc/HL0Fv0Xk/vdu-botanikos-sodas-01.jpg (обложка / OG)
+
+https://i.postimg.cc/FKvBSf85/vdu-botanikos-sodas-02.jpg
+
+https://i.postimg.cc/W4SXJ50g/vdu-botanikos-sodas-03.jpg
+
+https://i.postimg.cc/Wzx91tgy/vdu-botanikos-sodas-04.jpg
+
+https://i.postimg.cc/vBH2PJG0/vdu-botanikos-sodas-05.jpg
+
+https://i.postimg.cc/RV3yxxK8/vdu-botanikos-sodas-06.jpg
+
+https://i.postimg.cc/pLf0PWT0/vdu-botanikos-sodas-07.jpg
+
+https://i.postimg.cc/zXfwXTxL/vdu-botanikos-sodas-08.jpg
+
+https://i.postimg.cc/6QCn1cpP/vdu-botanikos-sodas-09.jpg
+
+https://i.postimg.cc/L60tqhWx/vdu-botanikos-sodas-10.jpg
+
+https://i.postimg.cc/kg6xWq3q/vdu-botanikos-sodas-11.jpg
+
+https://i.postimg.cc/zvGhv1Fm/vdu-botanikos-sodas-12.jpg
+
+https://i.postimg.cc/XJ8FnvFc/vdu-botanikos-sodas-13.jpg
+
+https://i.postimg.cc/4NntTs3V/vdu-botanikos-sodas-14.jpg
+
+https://i.postimg.cc/TYSbdFyS/vdu-botanikos-sodas-15.jpg
+
+https://i.postimg.cc/Z5ddCHpq/vdu-botanikos-sodas-16.jpg
+
+https://i.postimg.cc/13kDH2s6/vdu-botanikos-sodas-17.jpg
+
+https://i.postimg.cc/501LczH2/vdu-botanikos-sodas-18.jpg
+
+albums/winter.html (2 обложки под-альбомов)
+https://i.postimg.cc/G3SvWg4k/winter-album-cirkliskis-01.jpg (обложка / OG)
+
+https://i.postimg.cc/y605WPPP/winter-album-sventa-01.jpg
+
+albums/winter-cirkliskis.html (36 фото)
+https://i.postimg.cc/G3SvWg4k/winter-album-cirkliskis-01.jpg (обложка / OG)
+
+https://i.postimg.cc/BZw2r7j1/winter-album-cirkliskis-02.jpg
+
+https://i.postimg.cc/2jXns911/winter-album-cirkliskis-03.jpg
+
+https://i.postimg.cc/pV1KwcmX/winter-album-cirkliskis-04.jpg
+
+https://i.postimg.cc/90STyz33/winter-album-cirkliskis-05.jpg
+
+https://i.postimg.cc/J0gJj0fF/winter-album-cirkliskis-06.jpg
+
+https://i.postimg.cc/qqYn2qPw/winter-album-cirkliskis-07.jpg
+
+https://i.postimg.cc/KjVLtj6D/winter-album-cirkliskis-08.jpg
+
+https://i.postimg.cc/nr57qryB/winter-album-cirkliskis-09.jpg
+
+https://i.postimg.cc/8c3WLc2J/winter-album-cirkliskis-11.jpg
+
+https://i.postimg.cc/nrMBsBP4/winter-album-cirkliskis-12.jpg
+
+https://i.postimg.cc/Y0jY4Ysm/winter-album-cirkliskis-13.jpg
+
+https://i.postimg.cc/Kj4BKBH4/winter-album-cirkliskis-14.jpg
+
+https://i.postimg.cc/Vv5nSnV6/winter-album-cirkliskis-15.jpg
+
+https://i.postimg.cc/MHXVcVF8/winter-album-cirkliskis-16.jpg
+
+https://i.postimg.cc/Hx6bsBBm/winter-album-cirkliskis-17.jpg
+
+https://i.postimg.cc/SsgcNDVd/winter-album-cirkliskis-18.jpg
+
+https://i.postimg.cc/4dfzgrv8/winter-album-cirkliskis-19.jpg
+
+https://i.postimg.cc/76Hgkp11/winter-album-cirkliskis-20.jpg
+
+https://i.postimg.cc/NMs1cW8y/winter-album-cirkliskis-21.jpg
+
+https://i.postimg.cc/XJjwbTKB/winter-album-cirkliskis-22.jpg
+
+https://i.postimg.cc/0QkpsLG7/winter-album-cirkliskis-23.jpg
+
+https://i.postimg.cc/hjD9BH8X/winter-album-cirkliskis-24.jpg
+
+https://i.postimg.cc/4dfzgrv3/winter-album-cirkliskis-25.jpg
+
+https://i.postimg.cc/0Ndph8SQ/winter-album-cirkliskis-26.jpg
+
+https://i.postimg.cc/9ftGsW9V/winter-album-cirkliskis-27.jpg
+
+https://i.postimg.cc/XvcwtV5b/winter-album-cirkliskis-29.jpg
+
+https://i.postimg.cc/s29pbVhb/winter-album-cirkliskis-30.jpg
+
+https://i.postimg.cc/CKVGvZz3/winter-album-cirkliskis-32.jpg
+
+https://i.postimg.cc/Xv0f2ZpH/winter-album-cirkliskis-33.jpg
+
+https://i.postimg.cc/43T68Kmp/winter-album-cirkliskis-34.jpg
+
+https://i.postimg.cc/pLjQYQXp/winter-album-cirkliskis-39.jpg
+
+https://i.postimg.cc/HkM040sT/winter-album-cirkliskis-40.jpg
+
+https://i.postimg.cc/rF3CrZcs/winter-album-cirkliskis-41.jpg
+
+https://i.postimg.cc/rF3CrZcV/winter-album-cirkliskis-42.jpg
+
+https://i.postimg.cc/tCwtxvyy/winter-album-cirkliskis-43.jpg
+
+albums/winter-sventa.html (13 фото)
+https://i.postimg.cc/j2NTCz31/DSC00709.jpg (обложка / OG)
+
+https://i.postimg.cc/KjLb4npr/winter-album-sventa-01.jpg
+
+https://i.postimg.cc/sxSz1pHw/winter-album-sventa-03.jpg
+
+https://i.postimg.cc/zBy8YmnQ/winter-album-sventa-04.jpg
+
+https://i.postimg.cc/QtFhZLpn/winter-album-sventa-05.jpg
+
+https://i.postimg.cc/gc6mMWcZ/winter-album-sventa-08.jpg
+
+https://i.postimg.cc/66GtHX6q/winter-album-sventa-09.jpg
+
+https://i.postimg.cc/cHv0GqRy/winter-album-sventa-10.jpg
+
+https://i.postimg.cc/B6Rsqhp9/winter-album-sventa-13.jpg
+
+https://i.postimg.cc/0Qhx8tnP/winter-album-sventa-14.jpg
+
+https://i.postimg.cc/1RNsWQRs/winter-album-sventa-15.jpg
+
+https://i.postimg.cc/J0J8tbYj/winter-album-sventa-16.jpg
+
+https://i.postimg.cc/RF29MPdK/winter-album-sventa-17.jpg
+
+albums/zeimenos-zirgai.html (29 фото)
+https://i.postimg.cc/X7YSWTzV/Zeimenos-zirgai-logo.jpg (OG / логотип конюшни)
+
+https://i.postimg.cc/PfSbZTLR/IMG-9538.jpg (Hero-обложка)
+
+https://i.postimg.cc/bJXC780D/IMG-9138.jpg
+
+https://i.postimg.cc/kg6yqzgD/IMG-9544.jpg
+
+https://i.postimg.cc/brmRwjnV/IMG-9551.jpg
+
+https://i.postimg.cc/MTbDgBpG/IMG-9556.jpg
+
+https://i.postimg.cc/9Mtps9QC/IMG-9558.jpg
+
+https://i.postimg.cc/GpDzJV0L/IMG-9563.jpg
+
+https://i.postimg.cc/gkMMY3yf/IMG-9570.jpg
+
+https://i.postimg.cc/1zzBbXNR/IMG-9454.jpg
+
+https://i.postimg.cc/6Q6bwzFX/IMG-9460.jpg
+
+https://i.postimg.cc/5NvRmX8h/IMG-9470.jpg
+
+https://i.postimg.cc/FFYq7Wzg/IMG-9472.jpg
+
+https://i.postimg.cc/7hjn2nBm/IMG-9477.jpg
+
+https://i.postimg.cc/dDMG1t1x/IMG-9479.jpg
+
+https://i.postimg.cc/bJCTzhk2/IMG-9484.jpg
+
+https://i.postimg.cc/QNY4Dpqx/IMG-9490.jpg
+
+https://i.postimg.cc/TwwVN4Fn/IMG-9495.jpg
+
+https://i.postimg.cc/zXRj14Bg/IMG-9501.jpg
+
+https://i.postimg.cc/52Ckn6vR/IMG-9502.jpg
+
+https://i.postimg.cc/rFbP1SdH/IMG-9520.jpg
+
+https://i.postimg.cc/JzMPcPrH/IMG-9521.jpg
+
+https://i.postimg.cc/ryfbm6MQ/IMG-9526.jpg
+
+https://i.postimg.cc/65Smrd2s/IMG-9532.jpg
+
+https://i.postimg.cc/7Z2Qmf7t/IMG-9533.jpg
+
+https://i.postimg.cc/W1kfXhrW/IMG-9539.jpg
+
+https://i.postimg.cc/d1vX7w7t/IMG-9560.jpg
+
+https://i.postimg.cc/4xQ2rjLb/IMG-9572.jpg
+
+https://i.postimg.cc/GmCSgbQs/IMG-9577.jpg
+
+ЧАСТЬ 2. Логика SEO и Metadata сайта
+
+1. Общие правила <head> на каждой публичной странице
+Техническая подготовка и скорость:
+
+<meta charset="UTF-8"> и <meta name="viewport" content="width=device-width, initial-scale=1.0">.
+
+<link rel="preconnect" href="https://i.postimg.cc"> — ускоряет загрузку фотографий с внешнего хостинга.
+
+<link rel="preconnect" href="https://fonts.googleapis.com"> и <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin> — для шрифта Montserrat.
+
+<link rel="icon" type="image/png" href="https://iili.io/fjNLbs4.png">.
+
+Базовые SEO-теги:
+
+<title>:
+
+Главная: DP.PORTFOLIO
+
+Внутренние и альбомы: Название страницы / альбома | DP.PORTFOLIO
+
+<meta name="description">: уникальное описание (120–160 символов) под язык конкретного домена.
+
+<meta name="keywords"> и <meta name="author" content="DP.PORTFOLIO, DP Corporation"> (или Dominik Šuškevič).
+
+Управление индексацией (robots) и canonical:
+
+Открытые страницы (главная, альбомы, about, biography, frozen-time, contacts, privacy-policy, terms-of-service):
+content="index, follow, max-image-preview:large, max-video-preview:-1" (разрешает Google показывать большие превью фото в поиске и Google Images).
+
+Закрытые/служебные страницы:
+
+review.html (на основном сайте) использует noindex, follow.
+
+На отдельном языковом сайте (без admin.html, где услуги/TFP/отзывы ведут на portfolio.dominikphotofficial.lt) локальных копий этих разделов в индексе быть не должно.
+
+<link rel="canonical" href="...">:
+
+Всегда указывает на собственный полный URL страницы текущего домена (например, для главной https://<поддомен>.dominikphotofficial.lt/, для альбома https://<поддомен>.dominikphotofficial.lt/albums/<slug>.html).
+
+На главной канонический URL — именно /, без /index.html.
+
+2. Логика Open Graph и Twitter Cards (превью в соцсетях и мессенджерах)
+og:type по типу страницы:
+
+Главная (index.html), about.html, services.html, tfp-booking.html → website
+
+biography.html → profile
+
+Все альбомы (/albums/*.html), frozen-time.html, правовые страницы → article
+
+og:locale строго под язык поддомена:
+
+portfolio.dominikphotofficial.lt → lt_LT
+
+en.dominikphotofficial.lt → en_US (или en_GB)
+
+pl.dominikphotofficial.lt → pl_PL
+
+ru.dominikphotofficial.lt → ru_RU
+
+kr.dominikphotofficial.lt → ko_KR
+
+og:image и twitter:card:
+
+twitter:card = summary_large_image
+
+og:image и twitter:image = обложка конкретной страницы/альбома + og:image:width="1200", og:image:height="800".
+
+og:url должен совпадать с <link rel="canonical">.
+
+3. Структурированные данные Schema.org (application/ld+json)
+Разметка различается по роли страницы:
+
+Главная (index.html) — @graph из двух сущностей:
+
+WebSite (название, url, description, publisher, author: Person -> Dominik Šuškevič).
+
+Organization (DP Corporation, logo, contactPoint -> contacts.html).
+
+Альбомы (/albums/*.html):
+
+Для фотогалерей используется @type: "ImageGallery" (name, description, url, datePublished, author: Person, provider: Organization) — как в autoshow-kaunas-09-05.html, azuolynas.html, car-meet-2026-05-26.html.
+
+Специальный партнерский альбом zeimenos-zirgai.html размечен как @type: "LocalBusiness".
+
+biography.html — @type: "Person".
+
+frozen-time.html — @type: "Movie".
+
+4. Многоязычная логика (portfolio / en / pl / ru / kr)
+Для каждого языкового поддомена:
+
+<html lang="..."> задаётся в соответствии с языком (lt, en, pl, ru, ko).
+
+Все текстовые метатеги (title, description, keywords, og:title, og:description, twitter:*, поля JSON-LD и alt картинок) полностью переводятся на язык домена.
+
+Связь языков (hreflang) — для общих страниц (главная, все альбомы, about, biography, frozen-time, contacts, правовые страницы) в <head> можно размещать блок перекрёстных ссылок:
+
+hreflang="lt" → https://portfolio.dominikphotofficial.lt/...
+
+hreflang="en" → https://en.dominikphotofficial.lt/...
+
+hreflang="pl" → https://pl.dominikphotofficial.lt/...
+
+hreflang="ru" → https://ru.dominikphotofficial.lt/...
+
+hreflang="ko" → https://kr.dominikphotofficial.lt/...
+
+hreflang="x-default" → https://portfolio.dominikphotofficial.lt/...
+(Для services.html / tfp-booking.html hreflang не ставится, так как на других языковых доменах они сразу ведут на portfolio.dominikphotofficial.lt).
+
+5. SEO для изображений в галереях
+Для Hero/обложек — стандартная приоритетная загрузка без loading="lazy".
+
+Для всех фотографий в сетке галереи (.gallery-grid) — loading="lazy" и decoding="async", чтобы не тормозить первый экран.
+
+Обязательный осмысленный alt с темой/названием альбома и номером кадра на языке сайта (важно для попадания в Google Images).
+
+6. Логика robots.txt и sitemap.xml
+robots.txt на каждом домене разрешает индексацию и указывает на свой sitemap.xml:
+
+Txt
+User-agent: *
+Allow: /
+Sitemap: https://<текущий-домен>/sitemap.xml
+sitemap.xml:
+
+Главная / — priority: 1.0, changefreq: weekly.
+
+Ключевые разделы (frozen-time.html, about.html, biography.html, contacts.html) — priority: 0.8–0.9.
+
+Альбомы (/albums/*.html) — priority: 0.6–0.8.
+
+Правовые страницы (privacy-policy.html, terms-of-service.html) — priority: 0.7.
+
+Что НЕ должно быть в sitemap.xml языкового сайта (без админки и с переадресацией услуг):
+
+admin.html (на отдельном сайте его нет),
+
+review.html (скрыта через noindex),
+
+services.html и tfp-booking.html (если они редиректят/ведут напрямую на https://portfolio.dominikphotofficial.lt/...).
+
+(Замечание по текущему sitemap.xml основного сайта: сейчас в нём пропущен новый альбом albums/car-meet-2026-05-26.html, а также присутствуют одновременно / и /index.html — в чистом варианте оставляют только / и все 22 альбома).
